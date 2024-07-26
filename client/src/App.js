@@ -1,30 +1,29 @@
-import Viewer from './components/viewer/Viewer';
-import Nav from './components/navigation/Nav';
-import React, { useState } from 'react';
-import './App.css';
-import WebViewerContext from './context/webviewer';
-
+import Viewer from "./components/viewer/Viewer";
+import Nav from "./components/navigation/Nav";
+import React, { useState } from "react";
+import "./App.css";
+import WebViewerContext from "./context/webviewer";
 
 function App() {
   const [response, setResponse] = useState({});
   const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState('');
+  const [fetchError, setFetchError] = useState("");
   const [instance, setInstance] = useState();
   const defaultPageDimensions = { width: 1440, height: 770 };
-  const [validUrl, setValidUrl] = useState('');
+  const [validUrl, setValidUrl] = useState("");
 
-  const SERVER_ROOT = process.env.REACT_APP_HOST;
-  const PORT = process.env.REACT_APP_NODE_PORT;
+  const SERVER_ROOT = process.env.REACT_APP_HOST || "localhost";
+  const PORT = process.env.REACT_APP_NODE_PORT || 3100;
   const PATH = `http://${SERVER_ROOT}:${PORT}`;
 
   const loadURL = async (url, customHeaders = {}) => {
     setLoading(true);
-    setFetchError('');
+    setFetchError("");
 
     try {
       // first fetch for the proxied url
       const proxyUrlRes = await fetch(`${PATH}/pdftron-proxy?url=${url}`, {
-        credentials: 'include',
+        credentials: "include",
         headers: customHeaders,
       });
       if (proxyUrlRes.status === 400) {
@@ -38,7 +37,7 @@ function App() {
           validUrl = proxyUrlResJson.validUrl;
           setValidUrl(validUrl);
         } catch {
-          console.error('Error in calling `/pdftron-proxy`. Check server log');
+          console.error("Error in calling `/pdftron-proxy`. Check server log");
         }
         const { href, origin, pathname } = new URL(validUrl);
         const hrefWithoutOrigin = href.split(origin)[1] || pathname;
@@ -54,16 +53,20 @@ function App() {
     } catch (error) {
       console.error(error);
       setLoading(false);
-      setFetchError('Trouble fetching the URL, please make sure the server is running. `cd server && npm start`');
+      setFetchError(
+        "Trouble fetching the URL, please make sure the server is running. `cd server && npm start`"
+      );
     }
   };
 
   const downloadPDF = async () => {
     if (validUrl && response.iframeUrl) {
       setLoading(true);
-      setFetchError('');
+      setFetchError("");
       try {
-        const downloadPdfRes = await fetch(`${PATH}/pdftron-download?url=${validUrl}`);
+        const downloadPdfRes = await fetch(
+          `${PATH}/pdftron-download?url=${validUrl}`
+        );
         if (downloadPdfRes.ok) {
           try {
             // if sending only buffer from the server: res.send(buffer) then use res.blob() to avoid having the API consumed twice
@@ -74,27 +77,30 @@ function App() {
             await loadDocAndAnnots(blob, pageDimensions);
           } catch (error) {
             console.error(error);
-            setFetchError('Trouble downloading, please refresh and start again.');
+            setFetchError(
+              "Trouble downloading, please refresh and start again."
+            );
           }
         } else {
-          setFetchError('Trouble downloading, check server log.');
+          setFetchError("Trouble downloading, check server log.");
         }
         setLoading(false);
-      }
-      catch (error) {
+      } catch (error) {
         console.error(error);
-        setFetchError('Trouble downloading, please make sure the server is running. `cd server && npm start`');
+        setFetchError(
+          "Trouble downloading, please make sure the server is running. `cd server && npm start`"
+        );
         setLoading(false);
       }
     } else {
-      setFetchError('Please enter a valid URL and try again.');
+      setFetchError("Please enter a valid URL and try again.");
     }
   };
 
   const loadDocAndAnnots = async (blob, pageDimensions) => {
     setLoading(true);
     const doc = await instance.Core.createDocument(blob, {
-      extension: 'png',
+      extension: "png",
       pageSizes: [pageDimensions],
     });
 
@@ -102,11 +108,11 @@ function App() {
       .getAnnotationManager()
       .exportAnnotations();
     const data = await doc.getFileData({ xfdfString: xfdf });
-    const annotationsBlob = new Blob([data], { type: 'application/pdf' });
+    const annotationsBlob = new Blob([data], { type: "application/pdf" });
     const url = URL.createObjectURL(annotationsBlob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'annotated';
+    a.download = "annotated";
     a.click();
     a.remove();
     setLoading(false);
@@ -115,8 +121,8 @@ function App() {
   };
 
   const browseMode = () => {
-    instance && instance.UI.setToolbarGroup('toolbarGroup-View');
-  }
+    instance && instance.UI.setToolbarGroup("toolbarGroup-View");
+  };
 
   return (
     <WebViewerContext.Provider value={{ instance, setInstance }}>
