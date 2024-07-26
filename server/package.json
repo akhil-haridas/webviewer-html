@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@pdftron/webviewer-html-proxy-server": "^1.10.0",
+    "dotenv": "^16.4.5",
     "webviewer-html-annotate-proxy": "file:.."
   }
 }
